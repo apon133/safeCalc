@@ -10,33 +10,23 @@ dependencies:
   flutter:
     sdk: flutter
   icons_launcher: ^3.0.0
-  flutter_lints: ^5.0.0
-  flutter_staggered_grid_view: ^0.7.0
-  image_picker: ^1.1.2
-  math_expressions: ^2.6.0
-  permission_handler: ^11.4.0
-  shared_preferences: ^2.3.2
-  auto_size_text: ^3.0.0
-  better_player_enhanced: ^0.0.5
-  cached_network_image: ^3.4.1
-  camera: ^0.11.0+2
-  flutter_markdown: ^0.7.3+2
-  url_launcher: ^6.3.0
-  http: ^1.2.2
-  package_info_plus: ^8.0.2
-  intl: ^0.19.0
-  font_awesome_flutter: ^10.7.0
-  klutter_platfrom_verify: ^0.0.2
-  share_plus: ^10.1.4
-
-  # media_kit Upcoming all platform support
-  media_kit: ^1.1.11
-  media_kit_video: ^1.2.5
-  media_kit_libs_windows_video: 
-  media_kit_libs_linux:
-  media_kit_libs_macos_video:
-  media_kit_native_event_loop:
-  window_manager: ^0.4.3
+  flutter_lints:
+  flutter_staggered_grid_view:
+  image_picker: 
+  math_expressions: 
+  permission_handler: 
+  shared_preferences:   
+  auto_size_text: 
+  better_player_enhanced: 
+  cached_network_image: 
+  camera: 
+  flutter_markdown: 
+  url_launcher: 
+  http:
+  package_info_plus:
+  intl:
+  font_awesome_flutter:
+  share_plus:
 
 dev_dependencies:
   flutter_test:

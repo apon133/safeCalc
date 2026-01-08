@@ -3,7 +3,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:klutter_platfrom_verify/klutter_platfrom_verify.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // List to hold camera descriptions and image file paths
@@ -82,7 +81,7 @@ class ImagePageState extends State<ImagePage> {
             child: ListBody(
               children: [
                 // if()
-                if (isMobile())
+              
                   GestureDetector(
                     onTap: () {
                       Navigator.of(context).pop();
@@ -97,7 +96,7 @@ class ImagePageState extends State<ImagePage> {
                     child: const Text('Capture from Camera'),
                   ),
                 //! if desktop
-                if (isDesktop()) SizedBox(),
+             
 
                 const SizedBox(height: 10),
                 GestureDetector(

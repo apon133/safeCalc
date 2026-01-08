@@ -1,6 +1,7 @@
 analyzer:
   errors:
     deprecated_member_use: ignore
+    avoid_print: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

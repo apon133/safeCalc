@@ -6,11 +6,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
-
-// Initialize MediaKit at app startup
-final bool _isDesktop = !kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS);
 
 List<String> mediaFilePaths = [];
 
@@ -224,25 +219,15 @@ class MediaFullScreenPage extends StatefulWidget {
 }
 
 class _MediaFullScreenPageState extends State<MediaFullScreenPage> {
-  late final Player _player;
-  late final VideoController _videoController;
 
   @override
   void initState() {
     super.initState();
-    if (_isDesktop) {
-      // Initialize media_kit player for desktop platforms
-      _player = Player();
-      _videoController = VideoController(_player);
-      _player.open(Media(widget.mediaPath));
-    }
+  
   }
 
   @override
   void dispose() {
-    if (_isDesktop) {
-      _player.dispose();
-    }
     super.dispose();
   }
 
@@ -259,15 +244,7 @@ class _MediaFullScreenPageState extends State<MediaFullScreenPage> {
   }
 
   Widget _buildVideoPlayer() {
-    if (_isDesktop) {
-      // Use media_kit for desktop platforms
-      return Video(
-        controller: _videoController,
-        controls: AdaptiveVideoControls,
-      );
-    } else {
-      // Use better_player for other platforms
-      return BetterPlayer.file(
+    return BetterPlayer.file(
         widget.mediaPath,
         betterPlayerConfiguration: BetterPlayerConfiguration(
           aspectRatio: _getVideoAspectRatio(widget.mediaPath),
@@ -285,4 +262,4 @@ class _MediaFullScreenPageState extends State<MediaFullScreenPage> {
     }
     return 16 / 9;
   }
-}
+
