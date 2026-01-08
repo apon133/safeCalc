@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 import 'package:path_provider/path_provider.dart';
+import 'package:gal/gal.dart';
 
 List<String> mediaFilePaths = [];
 
@@ -147,7 +148,7 @@ class MediaPageState extends State<MediaPage> {
               crossAxisCount: 2,
               itemBuilder: (BuildContext context, int index) {
                 return GestureDetector(
-                  onLongPress: () => _showDeleteConfirmationDialog(index),
+                  onLongPress: () => _showMediaOptionsDialog(index),
                   onTap: () => _showMediaFullScreenPage(mediaFilePaths[index]),
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),
@@ -247,13 +248,48 @@ class MediaPageState extends State<MediaPage> {
     _generateThumbnail(path);
   }
 
+  Future<void> _showMediaOptionsDialog(int index) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Media Options'),
+          content: const Text('What would you like to do with this video?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _unlockMedia(index);
+              },
+              child: const Text('Unlock to Gallery'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showDeleteConfirmationDialog(index);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _showDeleteConfirmationDialog(int index) async {
     await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Delete Media?'),
-          content: const Text('Are you sure you want to delete this media?'),
+          title: const Text('Delete Video?'),
+          content: const Text(
+              'Are you sure you want to delete this video? This action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -272,6 +308,51 @@ class MediaPageState extends State<MediaPage> {
         );
       },
     );
+  }
+
+  Future<void> _unlockMedia(int index) async {
+    try {
+      final videoPath = mediaFilePaths[index];
+      final videoFile = File(videoPath);
+
+      if (!await videoFile.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Video file not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Save to gallery using Gal
+      await Gal.putVideo(videoPath);
+
+      // Remove from app storage
+      _deleteMedia(index);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Video unlocked and saved to gallery'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error unlocking video: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _deleteMedia(int index) async {

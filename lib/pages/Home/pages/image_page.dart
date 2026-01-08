@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gal/gal.dart';
 
 // List to hold camera descriptions and image file paths
 List<CameraDescription> cameras = [];
@@ -50,7 +51,7 @@ class ImagePageState extends State<ImagePage> {
               crossAxisCount: 2,
               itemBuilder: (BuildContext context, int index) {
                 return GestureDetector(
-                  onLongPress: () => _showDeleteConfirmationDialog(index),
+                  onLongPress: () => _showImageOptionsDialog(index),
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) => ImageFullScreenPage(
@@ -81,22 +82,21 @@ class ImagePageState extends State<ImagePage> {
             child: ListBody(
               children: [
                 // if()
-              
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => TakeImageScreen(
-                          onImageCapture: () {
-                            setState(() {});
-                          },
-                        ),
-                      ));
-                    },
-                    child: const Text('Capture from Camera'),
-                  ),
+
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => TakeImageScreen(
+                        onImageCapture: () {
+                          setState(() {});
+                        },
+                      ),
+                    ));
+                  },
+                  child: const Text('Capture from Camera'),
+                ),
                 //! if desktop
-             
 
                 const SizedBox(height: 10),
                 GestureDetector(
@@ -131,13 +131,48 @@ class ImagePageState extends State<ImagePage> {
     await _saveImagePageMediaFilePaths();
   }
 
+  Future<void> _showImageOptionsDialog(int index) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Image Options'),
+          content: const Text('What would you like to do with this image?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _unlockImage(index);
+              },
+              child: const Text('Unlock to Gallery'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showDeleteConfirmationDialog(index);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _showDeleteConfirmationDialog(int index) async {
     await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Delete Image?'),
-          content: const Text('Are you sure you want to delete this image?'),
+          content: const Text(
+              'Are you sure you want to delete this image? This action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -156,6 +191,51 @@ class ImagePageState extends State<ImagePage> {
         );
       },
     );
+  }
+
+  Future<void> _unlockImage(int index) async {
+    try {
+      final imagePath = imagePagePath[index];
+      final imageFile = File(imagePath);
+
+      if (!await imageFile.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Image file not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Save to gallery using Gal
+      await Gal.putImage(imagePath);
+
+      // Remove from app storage
+      _deleteMedia(index);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Image unlocked and saved to gallery'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error unlocking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _deleteMedia(int index) async {
