@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as vt;
+import 'package:path_provider/path_provider.dart';
 
 List<String> mediaFilePaths = [];
 
@@ -21,6 +23,7 @@ class MediaPageState extends State<MediaPage> {
   Future<void>? _initializeControllerFuture;
   bool isCameraInitialized = false;
   bool _isMobilePlatform = false;
+  final Map<String, String?> _thumbnailCache = {};
 
   @override
   void initState() {
@@ -66,6 +69,64 @@ class MediaPageState extends State<MediaPage> {
     setState(() {
       mediaFilePaths = prefs.getStringList('mediaFilePaths') ?? [];
     });
+    // Generate thumbnails for all videos
+    for (String path in mediaFilePaths) {
+      _generateThumbnail(path);
+    }
+  }
+
+  Future<void> _generateThumbnail(String videoPath) async {
+    if (_thumbnailCache.containsKey(videoPath)) return;
+
+    try {
+      final thumbnailPath = await vt.VideoThumbnail.thumbnailFile(
+        video: videoPath,
+        thumbnailPath: (await getTemporaryDirectory()).path,
+        imageFormat: vt.ImageFormat.PNG,
+        maxHeight: 200,
+        quality: 75,
+      );
+
+      if (mounted) {
+        setState(() {
+          _thumbnailCache[videoPath] = thumbnailPath;
+        });
+      }
+    } catch (e) {
+      print('Error generating thumbnail: $e');
+      setState(() {
+        _thumbnailCache[videoPath] = null;
+      });
+    }
+  }
+
+  Widget _buildThumbnail(String videoPath) {
+    final thumbnailPath = _thumbnailCache[videoPath];
+
+    if (thumbnailPath == null) {
+      // Loading or error state
+      return Container(
+        color: Colors.grey[800],
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Image.file(
+      File(thumbnailPath),
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey[800],
+          child: const Icon(
+            Icons.videocam,
+            size: 60,
+            color: Colors.white54,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -94,11 +155,32 @@ class MediaPageState extends State<MediaPage> {
                       height: 150,
                       width: 150,
                       decoration: BoxDecoration(
-                        color: Colors.grey[500],
+                        color: Colors.grey[800],
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.videocam, size: 100),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _buildThumbnail(mediaFilePaths[index]),
+                            // Play icon overlay
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black45,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -161,6 +243,8 @@ class MediaPageState extends State<MediaPage> {
       mediaFilePaths.add(path);
     });
     await _saveMediaFilePaths();
+    // Generate thumbnail for the newly added video
+    _generateThumbnail(path);
   }
 
   Future<void> _showDeleteConfirmationDialog(int index) async {
@@ -219,11 +303,9 @@ class MediaFullScreenPage extends StatefulWidget {
 }
 
 class _MediaFullScreenPageState extends State<MediaFullScreenPage> {
-
   @override
   void initState() {
     super.initState();
-  
   }
 
   @override
@@ -245,21 +327,20 @@ class _MediaFullScreenPageState extends State<MediaFullScreenPage> {
 
   Widget _buildVideoPlayer() {
     return BetterPlayer.file(
-        widget.mediaPath,
-        betterPlayerConfiguration: BetterPlayerConfiguration(
-          aspectRatio: _getVideoAspectRatio(widget.mediaPath),
-          fit: BoxFit.contain,
-          autoPlay: true,
-          looping: true,
-        ),
-      );
-    }
+      widget.mediaPath,
+      betterPlayerConfiguration: BetterPlayerConfiguration(
+        aspectRatio: _getVideoAspectRatio(widget.mediaPath),
+        fit: BoxFit.contain,
+        autoPlay: true,
+        looping: true,
+      ),
+    );
   }
+}
 
-  double _getVideoAspectRatio(String mediaPath) {
-    if (mediaPath.contains('portrait')) {
-      return 9 / 16;
-    }
-    return 16 / 9;
+double _getVideoAspectRatio(String mediaPath) {
+  if (mediaPath.contains('portrait')) {
+    return 9 / 16;
   }
-
+  return 16 / 9;
+}
