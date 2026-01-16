@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:intl/intl.dart';
 
-// --- Shared Preferences Provider ---
-final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+// --- Hive Box Provider ---
+final settingsBoxProvider = Provider<Box>((ref) {
   throw UnimplementedError();
 });
 
@@ -93,13 +93,13 @@ final calculatorProvider =
 class PasswordNotifier extends Notifier<String?> {
   @override
   String? build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return prefs.getString('savedPassword');
+    final box = ref.watch(settingsBoxProvider);
+    return box.get('savedPassword');
   }
 
   Future<void> setPassword(String newPassword) async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setString('savedPassword', newPassword);
+    final box = ref.read(settingsBoxProvider);
+    await box.put('savedPassword', newPassword);
     state = newPassword;
   }
 }
@@ -124,22 +124,22 @@ final navigationProvider =
 class ImageGalleryNotifier extends Notifier<List<String>> {
   @override
   List<String> build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return prefs.getStringList('mediaImagePageFilePaths') ?? [];
+    final box = ref.watch(settingsBoxProvider);
+    return List<String>.from(
+        box.get('mediaImagePageFilePaths', defaultValue: <String>[]));
   }
 
   Future<void> addImages(List<String> paths) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final box = ref.read(settingsBoxProvider);
     final newList = [...state, ...paths];
-    await prefs.setStringList('mediaImagePageFilePaths', newList);
+    await box.put('mediaImagePageFilePaths', newList);
     state = newList;
   }
 
   Future<void> removeImages(Set<int> indices) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final box = ref.read(settingsBoxProvider);
     List<String> newList = [...state];
 
-    // Convert to list and sort descending to remove without index shifting issues
     List<int> sortedIndices = indices.toList()..sort((a, b) => b.compareTo(a));
     for (int index in sortedIndices) {
       if (index >= 0 && index < newList.length) {
@@ -147,7 +147,7 @@ class ImageGalleryNotifier extends Notifier<List<String>> {
       }
     }
 
-    await prefs.setStringList('mediaImagePageFilePaths', newList);
+    await box.put('mediaImagePageFilePaths', newList);
     state = newList;
   }
 }
@@ -160,19 +160,20 @@ final imageGalleryProvider =
 class VideoGalleryNotifier extends Notifier<List<String>> {
   @override
   List<String> build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return prefs.getStringList('mediaFilePaths') ?? [];
+    final box = ref.watch(settingsBoxProvider);
+    return List<String>.from(
+        box.get('mediaFilePaths', defaultValue: <String>[]));
   }
 
   Future<void> addVideos(List<String> paths) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final box = ref.read(settingsBoxProvider);
     final newList = [...state, ...paths];
-    await prefs.setStringList('mediaFilePaths', newList);
+    await box.put('mediaFilePaths', newList);
     state = newList;
   }
 
   Future<void> removeVideos(Set<int> indices) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final box = ref.read(settingsBoxProvider);
     List<String> newList = [...state];
 
     List<int> sortedIndices = indices.toList()..sort((a, b) => b.compareTo(a));
@@ -182,7 +183,7 @@ class VideoGalleryNotifier extends Notifier<List<String>> {
       }
     }
 
-    await prefs.setStringList('mediaFilePaths', newList);
+    await box.put('mediaFilePaths', newList);
     state = newList;
   }
 }
@@ -195,24 +196,25 @@ final videoGalleryProvider =
 class NetworkGalleryNotifier extends Notifier<List<String>> {
   @override
   List<String> build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return prefs.getStringList('mediaNetworkImagePageFilePaths') ?? [];
+    final box = ref.watch(settingsBoxProvider);
+    return List<String>.from(
+        box.get('mediaNetworkImagePageFilePaths', defaultValue: <String>[]));
   }
 
   Future<void> addUrl(String url) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final box = ref.read(settingsBoxProvider);
     final newList = [...state, url];
-    await prefs.setStringList('mediaNetworkImagePageFilePaths', newList);
+    await box.put('mediaNetworkImagePageFilePaths', newList);
     state = newList;
   }
 
   Future<void> removeAt(int index) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final box = ref.read(settingsBoxProvider);
     List<String> newList = [...state];
     if (index >= 0 && index < newList.length) {
       newList.removeAt(index);
     }
-    await prefs.setStringList('mediaNetworkImagePageFilePaths', newList);
+    await box.put('mediaNetworkImagePageFilePaths', newList);
     state = newList;
   }
 }
