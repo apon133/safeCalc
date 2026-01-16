@@ -290,16 +290,17 @@ class MediaPageState extends ConsumerState<MediaPage> {
   Future<void> _captureMedia() async {
     final imagePicker = ImagePicker();
     try {
-      final List<XFile> mediaFiles = await imagePicker.pickMultipleMedia();
-      if (mediaFiles.isNotEmpty) {
-        final paths = mediaFiles.map((f) => f.path).toList();
-        await ref.read(videoGalleryProvider.notifier).addVideos(paths);
-        for (var path in paths) {
-          _generateThumbnail(path);
-        }
+      final XFile? videoFile = await imagePicker.pickVideo(
+        source: ImageSource.gallery,
+      );
+      if (videoFile != null) {
+        await ref
+            .read(videoGalleryProvider.notifier)
+            .addVideos([videoFile.path]);
+        _generateThumbnail(videoFile.path);
       }
     } catch (e) {
-      debugPrint('Error picking media: $e');
+      debugPrint('Error picking video: $e');
     }
   }
 
