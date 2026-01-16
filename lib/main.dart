@@ -15,18 +15,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: Colors.blueAccent,
-        iconTheme: const IconThemeData(color: Colors.white70),
-      ),
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: Colors.blueAccent,
-        iconTheme: const IconThemeData(color: Colors.white70),
-      ),
+      title: 'Safe Vault',
       debugShowCheckedModeBanner: false,
-      home: CalculatorPage(),
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF000000),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF63FFDA),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF000000),
+        ),
+      ),
+      home: const CalculatorPage(),
     );
   }
 }

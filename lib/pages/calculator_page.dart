@@ -235,19 +235,22 @@ class _CalculatorPageState extends State<CalculatorPage>
                           ),
                         ),
                       ),
-                      if (calculationResult != null)
+                      if (calculationResult != null &&
+                          calculationResult!.isNotEmpty)
                         Expanded(
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             reverse: true,
-                            padding: EdgeInsets.all(20),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 10),
                             child: Align(
                               alignment: Alignment.bottomRight,
                               child: SelectableText(
                                 calculationResult!,
                                 style: TextStyle(
-                                  fontSize: 35,
-                                  color: Colors.white,
+                                  fontSize: 32,
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontWeight: FontWeight.w300,
                                 ),
                               ),
                             ),
@@ -256,76 +259,83 @@ class _CalculatorPageState extends State<CalculatorPage>
                     ],
                   ),
                 ),
-                const Divider(
-                    color: Color.fromARGB(115, 84, 77, 77),
-                    thickness: 2,
-                    indent: 15,
-                    endIndent: 15),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Divider(
+                    color: Colors.white.withOpacity(0.1),
+                    thickness: 1,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ButtonWidget(
                         text: 'C',
-                        textColor: Colors.red,
+                        textColor: Colors.redAccent,
                         onTap: () => addNumber("C")),
                     ButtonWidget(
                         text: '()',
-                        textColor: Colors.green,
+                        textColor: const Color(0xFF63FFDA),
                         onTap: () => addNumber("()")),
                     ButtonWidget(
                         text: '%',
-                        textColor: Colors.green,
+                        textColor: const Color(0xFF63FFDA),
                         onTap: () => addNumber("%")),
                     ButtonWidget(
                         text: '÷',
-                        textColor: Colors.green,
+                        textColor: const Color(0xFF63FFDA),
                         onTap: () => addNumber("÷")),
                   ],
                 ),
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ButtonWidget(text: '7', onTap: () => addNumber("7")),
                     ButtonWidget(text: '8', onTap: () => addNumber("8")),
                     ButtonWidget(text: '9', onTap: () => addNumber("9")),
                     ButtonWidget(
                         text: '×',
-                        textColor: Colors.green,
+                        textColor: const Color(0xFF63FFDA),
                         onTap: () => addNumber("×")),
                   ],
                 ),
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ButtonWidget(text: '4', onTap: () => addNumber("4")),
                     ButtonWidget(text: '5', onTap: () => addNumber("5")),
                     ButtonWidget(text: '6', onTap: () => addNumber("6")),
                     ButtonWidget(
                         text: '-',
-                        textColor: Colors.green,
+                        textColor: const Color(0xFF63FFDA),
                         onTap: () => addNumber("-")),
                   ],
                 ),
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ButtonWidget(text: '1', onTap: () => addNumber("1")),
                     ButtonWidget(text: '2', onTap: () => addNumber("2")),
                     ButtonWidget(text: '3', onTap: () => addNumber("3")),
                     ButtonWidget(
                         text: '+',
-                        textColor: Colors.green,
+                        textColor: const Color(0xFF63FFDA),
                         onTap: () => addNumber("+")),
                   ],
                 ),
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ButtonWidget(text: '0', onTap: () => addNumber("0")),
                     ButtonWidget(text: '.', onTap: () => addNumber(".")),
                     ButtonWidget(
                       text: 'Del',
-                      boxColor: Colors.red,
+                      boxColor: Colors.redAccent.withOpacity(0.8),
                       onTap: () {
                         if (input.isNotEmpty) {
                           input = input.substring(0, input.length - 1);
@@ -337,7 +347,7 @@ class _CalculatorPageState extends State<CalculatorPage>
                       onLongPress: setPassword,
                       child: ButtonWidget(
                         text: '=',
-                        boxColor: Colors.green,
+                        boxColor: const Color(0xFF00C853),
                         onTap: () {
                           if (savedPassword == null) {
                             _promptNewPassword();

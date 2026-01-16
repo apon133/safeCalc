@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
@@ -100,125 +99,72 @@ class StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
-    double displayWidth = MediaQuery.of(context).size.width;
-    final theme = Theme.of(context);
-    return SafeArea(
-      bottom: true,
-      top: false,
-      child: Scaffold(
-        //! remove this
-        // backgroundColor: theme.scaffoldBackgroundColor,
-        body: _pages[currentIndex],
-        bottomNavigationBar: buildBottomNavigationBar(displayWidth, theme),
-      ),
-    );
-  }
-
-  Widget buildBottomNavigationBar(double displayWidth, ThemeData theme) {
-    return Container(
-      // padding: EdgeInsets.only(bottom: 20),
-      height: 60,
-      decoration: BoxDecoration(
-        color:
-            theme.brightness == Brightness.dark ? Colors.black : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.1),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(_icons.length, (index) {
-          return buildNavItem(index, displayWidth, theme);
-        }),
-      ),
-    );
-  }
-
-  Widget buildNavItem(int index, double displayWidth, ThemeData theme) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          currentIndex = index;
-          HapticFeedback.lightImpact();
-        });
-      },
-      child: Stack(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(seconds: 1),
-            curve: Curves.fastLinearToSlowEaseIn,
-            width:
-                index == currentIndex ? displayWidth * .32 : displayWidth * .18,
-            alignment: Alignment.center,
-            child: AnimatedContainer(
-              duration: const Duration(seconds: 1),
-              curve: Curves.fastLinearToSlowEaseIn,
-              height: index == currentIndex ? displayWidth * .12 : 0,
-              width: index == currentIndex ? displayWidth * .32 : 0,
-              decoration: BoxDecoration(
-                color: index == currentIndex
-                    ? theme.primaryColor.withOpacity(.2)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(50),
-              ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: _pages[currentIndex],
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F0F0F),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(seconds: 1),
-            curve: Curves.fastLinearToSlowEaseIn,
-            width:
-                index == currentIndex ? displayWidth * .31 : displayWidth * .18,
-            alignment: Alignment.center,
-            child: Stack(
-              children: [
-                Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(seconds: 1),
-                      curve: Curves.fastLinearToSlowEaseIn,
-                      width: index == currentIndex ? displayWidth * .13 : 0,
-                    ),
-                    AnimatedOpacity(
-                      opacity: index == currentIndex ? 1 : 0,
-                      duration: const Duration(seconds: 1),
-                      curve: Curves.fastLinearToSlowEaseIn,
-                      child: Text(
-                        index == currentIndex ? _titles[index] : '',
-                        style: TextStyle(
-                          color: theme.primaryColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
+          ],
+        ),
+        child: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_icons.length, (index) {
+              final isSelected = currentIndex == index;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    currentIndex = index;
+                    HapticFeedback.selectionClick();
+                  });
+                },
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF63FFDA).withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _icons[index],
+                        color: isSelected
+                            ? const Color(0xFF63FFDA)
+                            : Colors.white38,
+                        size: 26,
                       ),
-                    ),
-                  ],
+                      if (isSelected) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          _titles[index],
+                          style: const TextStyle(
+                            color: Color(0xFF63FFDA),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(seconds: 1),
-                      curve: Curves.fastLinearToSlowEaseIn,
-                      width: index == currentIndex ? displayWidth * .03 : 20,
-                    ),
-                    Icon(
-                      _icons[index],
-                      size: displayWidth * .076,
-                      color: index == currentIndex
-                          ? theme.primaryColor
-                          : (theme.brightness == Brightness.dark
-                              ? Colors.white70
-                              : Colors.black54),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            }),
           ),
-        ],
+        ),
       ),
     );
   }

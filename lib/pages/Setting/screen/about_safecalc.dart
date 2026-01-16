@@ -36,10 +36,10 @@ class AboutSafecalc extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Text("© 2025 Gokeihub"),
+                const Text("© 2025 Apon133"),
                 const SizedBox(height: 15),
                 const TextButtonWidget(
-                    text: "Gokei Hub", url: 'https://gokeihub.blogspot.com/'),
+                    text: "Apon133", url: 'https://Apon133.blogspot.com/'),
                 const SizedBox(height: 15),
                 const Text(
                   "safeCalc is free, open-source Lock App",
@@ -56,10 +56,10 @@ class AboutSafecalc extends StatelessWidget {
                 ),
                 const Row(
                   children: [
-                    Text("Gokeihub LAB"),
+                    Text("Apon133"),
                     TextButtonWidget(
-                      text: "gokeihub",
-                      url: 'https://github.com/gokeihub',
+                      text: "Apon133",
+                      url: 'https://github.com/apon133',
                     ),
                   ],
                 ),
@@ -70,22 +70,18 @@ class AboutSafecalc extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextButtonWidget(
-                        text: "HomePage",
-                        url: 'https://gokeihub.blogspot.com/',
-                      ),
-                      TextButtonWidget(
                         text: "Source Code (Github)",
-                        url: 'https://github.com/gokeihub/safeCalc',
+                        url: 'https://github.com/apon133/safeCalc',
                       ),
                       TextButtonWidget(
                         text: "License",
                         url:
-                            'https://github.com/gokeihub/safeCalc/blob/main/LICENSE',
+                            'https://github.com/apon133/safeCalc/blob/main/LICENSE',
                       ),
                       TextButtonWidget(
                         text: "CHANGELOG",
                         url:
-                            'https://github.com/gokeihub/safeCalc/blob/main/CHANGELOG.md',
+                            'https://github.com/apon133/safeCalc/blob/main/CHANGELOG.md',
                       ),
                     ],
                   ),

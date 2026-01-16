@@ -14,59 +14,87 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        title: const Text('Home Page'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Safe Vault',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
+            Text(
+              'Your Protected Media',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w300,
+                letterSpacing: 1.1,
+              ),
+            ),
+            const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, 
-                  crossAxisSpacing: 16, 
-                  mainAxisSpacing: 16, // Space between rows
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                padding: const EdgeInsets.only(bottom: 20),
+                children: [
+                  GridBox(
+                    boxName: 'Images',
+                    boxIcon: Icons.photo_library_outlined,
+                    gradient: const [Color(0xFF63FFDA), Color(0xFF00BFA5)],
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (b) => const ImagePage()),
+                      );
+                    },
+                  ),
+                  GridBox(
+                    boxName: 'Cloud',
+                    boxIcon: Icons.cloud_outlined,
+                    gradient: const [Color(0xFF42A5F5), Color(0xFF1976D2)],
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (b) => const NetworkImagePage()),
+                      );
+                    },
+                  ),
+                  GridBox(
+                    boxName: 'Videos',
+                    boxIcon: Icons.movie_outlined,
+                    gradient: const [Color(0xFFFF7043), Color(0xFFE64A19)],
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (b) => const MediaPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Text(
+                  'apon133',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.2),
+                    fontSize: 12,
+                    letterSpacing: 2,
+                  ),
                 ),
-                itemCount: 3, // Number of items in the grid
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return GridBox(
-                      boxName: 'Image',
-                      boxIcon: Icons.image,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (b) => const ImagePage()),
-                        );
-                      },
-                    );
-                  } else if (index == 1) {
-                    return GridBox(
-                      boxName: 'Network Image',
-                      boxIcon: Icons.wifi,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (b) => const NetworkImagePage(),
-                          ),
-                        );
-                      },
-                    );
-                  } else {
-                    return GridBox(
-                      boxName: 'Video',
-                      boxIcon: Icons.videocam,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (b) => const MediaPage()),
-                        );
-                      },
-                    );
-                  }
-                },
               ),
             ),
           ],
@@ -76,60 +104,62 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class GridBox extends StatefulWidget {
+class GridBox extends StatelessWidget {
   final Function()? onTap;
   final String boxName;
   final IconData boxIcon;
+  final List<Color> gradient;
+
   const GridBox({
     super.key,
     this.onTap,
     required this.boxName,
     required this.boxIcon,
+    required this.gradient,
   });
 
   @override
-  State<GridBox> createState() => _GridBoxState();
-}
-
-class _GridBoxState extends State<GridBox> {
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: Container(
-        width: 160,
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey[850] : Colors.grey[300],
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors: [
+              gradient[0].withOpacity(0.15),
+              gradient[1].withOpacity(0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: gradient[0].withOpacity(0.2),
+            width: 1,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              widget.boxIcon,
-              size: 80,
-              color: isDarkMode ? Colors.white70 : Colors.black87,
-            ),
-            const SizedBox(height: 8),
             Container(
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
+                color: gradient[0].withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              width: double.infinity,
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                widget.boxName,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                ),
+              child: Icon(
+                boxIcon,
+                size: 40,
+                color: gradient[0],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              boxName,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
           ],
