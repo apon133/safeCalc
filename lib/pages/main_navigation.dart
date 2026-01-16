@@ -1,5 +1,5 @@
 // ignore_for_file: deprecated_member_use
-
+import 'package:calculetor/core/providers.dart';
 import 'package:calculetor/pages/Home/pages/home_page.dart';
 import 'package:calculetor/pages/Setting/screen/setting.dart';
 import 'package:flutter/material.dart';
@@ -8,17 +8,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class StartPage extends StatefulWidget {
+class StartPage extends ConsumerStatefulWidget {
   const StartPage({super.key});
 
   @override
-  StartPageState createState() => StartPageState();
+  ConsumerState<StartPage> createState() => StartPageState();
 }
 
-class StartPageState extends State<StartPage> {
-  int currentIndex = 0;
-
+class StartPageState extends ConsumerState<StartPage> {
   final List<Widget> _pages = [
     const HomePage(),
     const SettingPage(),
@@ -72,23 +71,15 @@ class StartPageState extends State<StartPage> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Later'),
           ),
           TextButton(
             onPressed: () async {
               const String appUpdateUrl =
-                  'https://github.com/gokeihub/safeCalc/releases';
-
+                  'https://github.com/apon133/safeCalc/releases';
               final Uri url = Uri.parse(appUpdateUrl);
-
-              if (await canLaunch(url.toString())) {
-                await launch(url.toString());
-              } else {
-                await launch(url.toString());
-              }
+              await launchUrl(url, mode: LaunchMode.externalApplication);
             },
             child: const Text('Update Now'),
           ),
@@ -99,6 +90,8 @@ class StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = ref.watch(navigationProvider);
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: _pages[currentIndex],
@@ -121,10 +114,8 @@ class StartPageState extends State<StartPage> {
               final isSelected = currentIndex == index;
               return GestureDetector(
                 onTap: () {
-                  setState(() {
-                    currentIndex = index;
-                    HapticFeedback.selectionClick();
-                  });
+                  ref.read(navigationProvider.notifier).setIndex(index);
+                  HapticFeedback.selectionClick();
                 },
                 behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
