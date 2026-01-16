@@ -26,6 +26,9 @@ class MediaPageState extends State<MediaPage> {
   bool _isMobilePlatform = false;
   final Map<String, String?> _thumbnailCache = {};
 
+  bool _isSelectionMode = false;
+  final Set<int> _selectedIndices = {};
+
   @override
   void initState() {
     super.initState();
@@ -130,15 +133,58 @@ class MediaPageState extends State<MediaPage> {
     );
   }
 
+  void _hideSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedIndices.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showMediaSourceSelectionDialog,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _isSelectionMode
+          ? null
+          : FloatingActionButton(
+              onPressed: _showMediaSourceSelectionDialog,
+              child: const Icon(Icons.add),
+            ),
       appBar: AppBar(
-        title: const Text('Video'),
+        title: Text(
+            _isSelectionMode ? '${_selectedIndices.length} Selected' : 'Video'),
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _hideSelectionMode,
+              )
+            : null,
+        actions: [
+          if (_isSelectionMode) ...[
+            IconButton(
+              icon: const Icon(Icons.file_download_outlined),
+              onPressed: _selectedIndices.isEmpty
+                  ? null
+                  : () => _unlockSelectedMedia(),
+              tooltip: 'Unlock Selected',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _selectedIndices.isEmpty
+                  ? null
+                  : () => _showMultiDeleteConfirmationDialog(),
+              tooltip: 'Delete Selected',
+            ),
+          ] else
+            IconButton(
+              icon: const Icon(Icons.select_all),
+              onPressed: () {
+                setState(() {
+                  _isSelectionMode = true;
+                });
+              },
+              tooltip: 'Selection Mode',
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -147,9 +193,32 @@ class MediaPageState extends State<MediaPage> {
               itemCount: mediaFilePaths.length,
               crossAxisCount: 2,
               itemBuilder: (BuildContext context, int index) {
+                final isSelected = _selectedIndices.contains(index);
                 return GestureDetector(
-                  onLongPress: () => _showMediaOptionsDialog(index),
-                  onTap: () => _showMediaFullScreenPage(mediaFilePaths[index]),
+                  onLongPress: () {
+                    if (!_isSelectionMode) {
+                      setState(() {
+                        _isSelectionMode = true;
+                        _selectedIndices.add(index);
+                      });
+                    }
+                  },
+                  onTap: () {
+                    if (_isSelectionMode) {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedIndices.remove(index);
+                          if (_selectedIndices.isEmpty) {
+                            _isSelectionMode = false;
+                          }
+                        } else {
+                          _selectedIndices.add(index);
+                        }
+                      });
+                    } else {
+                      _showMediaFullScreenPage(index);
+                    }
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: Container(
@@ -169,7 +238,7 @@ class MediaPageState extends State<MediaPage> {
                             Center(
                               child: Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: Colors.black45,
                                   shape: BoxShape.circle,
                                 ),
@@ -180,6 +249,27 @@ class MediaPageState extends State<MediaPage> {
                                 ),
                               ),
                             ),
+                            if (_isSelectionMode)
+                              Positioned(
+                                top: 5,
+                                right: 5,
+                                child: Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  color:
+                                      isSelected ? Colors.blue : Colors.white70,
+                                ),
+                              ),
+                            if (_isSelectionMode && isSelected)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -208,17 +298,11 @@ class MediaPageState extends State<MediaPage> {
                     Navigator.of(context).pop();
                     _captureMedia(ImageSource.gallery);
                   },
-                  child: const Text('Pick from Gallery'),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('Pick from Gallery'),
+                  ),
                 ),
-                const SizedBox(height: 10),
-                // if (_isMobilePlatform)
-                //   GestureDetector(
-                //     // onTap: () {
-                //     //   Navigator.of(context).pop();
-                //     //   _captureMedia(ImageSource.camera);
-                //     // },
-                //     child: const Text('Take Photo/Video'),
-                //   ),
               ],
             ),
           ),
@@ -230,12 +314,25 @@ class MediaPageState extends State<MediaPage> {
   Future<void> _captureMedia(ImageSource source) async {
     final imagePicker = ImagePicker();
     try {
-      final XFile? videoFile = await imagePicker.pickVideo(source: source);
-      if (videoFile != null) {
-        _addMediaFile(videoFile.path);
+      // Use pickMultipleMedia to allow selecting multiple videos/images
+      final List<XFile> mediaFiles = await imagePicker.pickMultipleMedia();
+      if (mediaFiles.isNotEmpty) {
+        for (var file in mediaFiles) {
+          // Check if it's a video based on extension (optional but safer)
+          _addMediaFile(file.path);
+        }
       }
     } catch (e) {
-      print('Error picking video: $e');
+      print('Error picking media: $e');
+      // Fallback if pickMultipleMedia is not supported
+      try {
+        final XFile? videoFile = await imagePicker.pickVideo(source: source);
+        if (videoFile != null) {
+          _addMediaFile(videoFile.path);
+        }
+      } catch (e2) {
+        print('Error picking video fallback: $e2');
+      }
     }
   }
 
@@ -248,31 +345,23 @@ class MediaPageState extends State<MediaPage> {
     _generateThumbnail(path);
   }
 
-  Future<void> _showMediaOptionsDialog(int index) async {
+  Future<void> _showMultiDeleteConfirmationDialog() async {
     await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Media Options'),
-          content: const Text('What would you like to do with this video?'),
+          title: Text('Delete ${_selectedIndices.length} Videos?'),
+          content: const Text(
+              'Are you sure you want to delete the selected videos? This action cannot be undone.'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
+                _deleteSelectedMedia();
                 Navigator.of(context).pop();
-                _unlockMedia(index);
-              },
-              child: const Text('Unlock to Gallery'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showDeleteConfirmationDialog(index);
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
@@ -282,90 +371,60 @@ class MediaPageState extends State<MediaPage> {
     );
   }
 
-  Future<void> _showDeleteConfirmationDialog(int index) async {
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Video?'),
-          content: const Text(
-              'Are you sure you want to delete this video? This action cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _deleteMedia(index);
-                Navigator.of(context).pop();
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
+  Future<void> _unlockSelectedMedia() async {
+    int count = 0;
+    List<int> sortedIndices = _selectedIndices.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Unlocking videos...'), duration: Duration(seconds: 1)),
     );
-  }
 
-  Future<void> _unlockMedia(int index) async {
-    try {
-      final videoPath = mediaFilePaths[index];
-      final videoFile = File(videoPath);
-
-      if (!await videoFile.exists()) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error: Video file not found'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
+    for (int index in sortedIndices) {
+      try {
+        final videoPath = mediaFilePaths[index];
+        await Gal.putVideo(videoPath);
+        count++;
+      } catch (e) {
+        print('Error unlocking video at index $index: $e');
       }
+    }
 
-      // Save to gallery using Gal
-      await Gal.putVideo(videoPath);
+    _deleteSelectedMedia();
 
-      // Remove from app storage
-      _deleteMedia(index);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Video unlocked and saved to gallery'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error unlocking video: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ $count videos unlocked and saved to gallery'),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 
-  void _deleteMedia(int index) async {
+  void _deleteSelectedMedia() async {
     final prefs = await SharedPreferences.getInstance();
+    List<int> sortedIndices = _selectedIndices.toList()
+      ..sort((a, b) => b.compareTo(a));
+
     setState(() {
-      mediaFilePaths.removeAt(index);
+      for (int index in sortedIndices) {
+        mediaFilePaths.removeAt(index);
+      }
+      _isSelectionMode = false;
+      _selectedIndices.clear();
     });
+
     await prefs.setStringList('mediaFilePaths', mediaFilePaths);
   }
 
-  Future<void> _showMediaFullScreenPage(String mediaPath) async {
+  Future<void> _showMediaFullScreenPage(int initialIndex) async {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => MediaFullScreenPage(mediaPath: mediaPath),
+      builder: (context) => MediaFullScreenPage(
+        initialIndex: initialIndex,
+        mediaPaths: mediaFilePaths,
+      ),
     ));
   }
 
@@ -376,52 +435,106 @@ class MediaPageState extends State<MediaPage> {
 }
 
 class MediaFullScreenPage extends StatefulWidget {
-  final String mediaPath;
-  const MediaFullScreenPage({super.key, required this.mediaPath});
+  final int initialIndex;
+  final List<String> mediaPaths;
+  const MediaFullScreenPage(
+      {super.key, required this.initialIndex, required this.mediaPaths});
 
   @override
   State<MediaFullScreenPage> createState() => _MediaFullScreenPageState();
 }
 
 class _MediaFullScreenPageState extends State<MediaFullScreenPage> {
+  late PageController _pageController;
+  late int _currentIndex;
+
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Video Player"),
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          '${_currentIndex + 1} / ${widget.mediaPaths.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
-      body: Center(
-        child: _buildVideoPlayer(),
-      ),
-    );
-  }
-
-  Widget _buildVideoPlayer() {
-    return BetterPlayer.file(
-      widget.mediaPath,
-      betterPlayerConfiguration: BetterPlayerConfiguration(
-        aspectRatio: _getVideoAspectRatio(widget.mediaPath),
-        fit: BoxFit.contain,
-        autoPlay: true,
-        looping: true,
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.mediaPaths.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        itemBuilder: (context, index) {
+          return VideoPlayerItem(mediaPath: widget.mediaPaths[index]);
+        },
       ),
     );
   }
 }
 
-double _getVideoAspectRatio(String mediaPath) {
-  if (mediaPath.contains('portrait')) {
-    return 9 / 16;
+class VideoPlayerItem extends StatefulWidget {
+  final String mediaPath;
+  const VideoPlayerItem({super.key, required this.mediaPath});
+
+  @override
+  State<VideoPlayerItem> createState() => _VideoPlayerItemState();
+}
+
+class _VideoPlayerItemState extends State<VideoPlayerItem> {
+  late BetterPlayerController _betterPlayerController;
+
+  @override
+  void initState() {
+    super.initState();
+    BetterPlayerConfiguration betterPlayerConfiguration =
+        BetterPlayerConfiguration(
+      aspectRatio: _getVideoAspectRatio(widget.mediaPath),
+      fit: BoxFit.contain,
+      autoPlay: true,
+      looping: true,
+    );
+    BetterPlayerDataSource dataSource = BetterPlayerDataSource(
+      BetterPlayerDataSourceType.file,
+      widget.mediaPath,
+    );
+    _betterPlayerController = BetterPlayerController(betterPlayerConfiguration);
+    _betterPlayerController.setupDataSource(dataSource);
   }
-  return 16 / 9;
+
+  @override
+  void dispose() {
+    _betterPlayerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: BetterPlayer(controller: _betterPlayerController),
+    );
+  }
+
+  double _getVideoAspectRatio(String mediaPath) {
+    if (mediaPath.contains('portrait')) {
+      return 9 / 16;
+    }
+    return 16 / 9;
+  }
 }

@@ -10,6 +10,7 @@ import 'package:gal/gal.dart';
 List<CameraDescription> cameras = [];
 List<String> imagePagePath = [];
 
+
 class ImagePage extends StatefulWidget {
   const ImagePage({super.key});
 
@@ -18,6 +19,9 @@ class ImagePage extends StatefulWidget {
 }
 
 class ImagePageState extends State<ImagePage> {
+  bool _isSelectionMode = false;
+  final Set<int> _selectedIndices = {};
+
   @override
   void initState() {
     super.initState();
@@ -31,17 +35,60 @@ class ImagePageState extends State<ImagePage> {
     });
   }
 
+  void _hideSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedIndices.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showImageSourceSelectionDialog();
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _isSelectionMode
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                _showImageSourceSelectionDialog();
+              },
+              child: const Icon(Icons.add),
+            ),
       appBar: AppBar(
-        title: const Text('Image'),
+        title: Text(
+            _isSelectionMode ? '${_selectedIndices.length} Selected' : 'Image'),
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _hideSelectionMode,
+              )
+            : null,
+        actions: [
+          if (_isSelectionMode) ...[
+            IconButton(
+              icon: const Icon(Icons.file_download_outlined),
+              onPressed: _selectedIndices.isEmpty
+                  ? null
+                  : () => _unlockSelectedImages(),
+              tooltip: 'Unlock Selected',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _selectedIndices.isEmpty
+                  ? null
+                  : () => _showMultiDeleteConfirmationDialog(),
+              tooltip: 'Delete Selected',
+            ),
+          ] else
+            IconButton(
+              icon: const Icon(Icons.select_all),
+              onPressed: () {
+                setState(() {
+                  _isSelectionMode = true;
+                });
+              },
+              tooltip: 'Selection Mode',
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -50,18 +97,70 @@ class ImagePageState extends State<ImagePage> {
               itemCount: imagePagePath.length,
               crossAxisCount: 2,
               itemBuilder: (BuildContext context, int index) {
+                final isSelected = _selectedIndices.contains(index);
                 return GestureDetector(
-                  onLongPress: () => _showImageOptionsDialog(index),
+                  onLongPress: () {
+                    if (!_isSelectionMode) {
+                      setState(() {
+                        _isSelectionMode = true;
+                        _selectedIndices.add(index);
+                      });
+                    }
+                  },
                   onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => ImageFullScreenPage(
-                        imagePath: imagePagePath[index],
-                      ),
-                    ));
+                    if (_isSelectionMode) {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedIndices.remove(index);
+                          if (_selectedIndices.isEmpty) {
+                            _isSelectionMode = false;
+                          }
+                        } else {
+                          _selectedIndices.add(index);
+                        }
+                      });
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => ImageFullScreenPage(
+                          initialIndex: index,
+                          imagePaths: imagePagePath,
+                        ),
+                      ));
+                    }
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(5.0),
-                    child: Image.file(File(imagePagePath[index])),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(imagePagePath[index]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        if (_isSelectionMode)
+                          Positioned(
+                            top: 5,
+                            right: 5,
+                            child: Icon(
+                              isSelected
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              color: isSelected ? Colors.blue : Colors.white70,
+                            ),
+                          ),
+                        if (_isSelectionMode && isSelected)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -81,8 +180,6 @@ class ImagePageState extends State<ImagePage> {
           content: SingleChildScrollView(
             child: ListBody(
               children: [
-                // if()
-
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).pop();
@@ -94,17 +191,21 @@ class ImagePageState extends State<ImagePage> {
                       ),
                     ));
                   },
-                  child: const Text('Capture from Camera'),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('Capture from Camera'),
+                  ),
                 ),
-                //! if desktop
-
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).pop();
                     _captureMedia(ImageSource.gallery);
                   },
-                  child: const Text('Pick from Gallery'),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('Pick from Gallery'),
+                  ),
                 ),
               ],
             ),
@@ -131,31 +232,23 @@ class ImagePageState extends State<ImagePage> {
     await _saveImagePageMediaFilePaths();
   }
 
-  Future<void> _showImageOptionsDialog(int index) async {
+  Future<void> _showMultiDeleteConfirmationDialog() async {
     await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Image Options'),
-          content: const Text('What would you like to do with this image?'),
+          title: Text('Delete ${_selectedIndices.length} Images?'),
+          content: const Text(
+              'Are you sure you want to delete the selected images? This action cannot be undone.'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
+                _deleteSelectedMedia();
                 Navigator.of(context).pop();
-                _unlockImage(index);
-              },
-              child: const Text('Unlock to Gallery'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showDeleteConfirmationDialog(index);
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
@@ -165,109 +258,119 @@ class ImagePageState extends State<ImagePage> {
     );
   }
 
-  Future<void> _showDeleteConfirmationDialog(int index) async {
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Image?'),
-          content: const Text(
-              'Are you sure you want to delete this image? This action cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _deleteMedia(index);
-                Navigator.of(context).pop();
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
+  Future<void> _unlockSelectedImages() async {
+    int count = 0;
+    List<int> sortedIndices = _selectedIndices.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    // Show progress dialog or snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Unlocking images...'), duration: Duration(seconds: 1)),
     );
-  }
 
-  Future<void> _unlockImage(int index) async {
-    try {
-      final imagePath = imagePagePath[index];
-      final imageFile = File(imagePath);
-
-      if (!await imageFile.exists()) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error: Image file not found'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
+    for (int index in sortedIndices) {
+      try {
+        final imagePath = imagePagePath[index];
+        await Gal.putImage(imagePath);
+        count++;
+      } catch (e) {
+        print('Error unlocking image at index $index: $e');
       }
+    }
 
-      // Save to gallery using Gal
-      await Gal.putImage(imagePath);
+    _deleteSelectedMedia();
 
-      // Remove from app storage
-      _deleteMedia(index);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Image unlocked and saved to gallery'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error unlocking image: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ $count images unlocked and saved to gallery'),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 
-  void _deleteMedia(int index) async {
+  void _deleteSelectedMedia() async {
     final prefs = await SharedPreferences.getInstance();
+    List<int> sortedIndices = _selectedIndices.toList()
+      ..sort((a, b) => b.compareTo(a));
+
     setState(() {
-      imagePagePath.removeAt(index);
+      for (int index in sortedIndices) {
+        imagePagePath.removeAt(index);
+      }
+      _isSelectionMode = false;
+      _selectedIndices.clear();
     });
+
     await prefs.setStringList('mediaImagePageFilePaths', imagePagePath);
   }
 }
 
-class ImageFullScreenPage extends StatelessWidget {
-  final String imagePath;
+class ImageFullScreenPage extends StatefulWidget {
+  final int initialIndex;
+  final List<String> imagePaths;
 
-  const ImageFullScreenPage({super.key, required this.imagePath});
+  const ImageFullScreenPage(
+      {super.key, required this.initialIndex, required this.imagePaths});
+
+  @override
+  State<ImageFullScreenPage> createState() => _ImageFullScreenPageState();
+}
+
+class _ImageFullScreenPageState extends State<ImageFullScreenPage> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: Center(
-        child: InteractiveViewer(
-          boundaryMargin: const EdgeInsets.all(80),
-          panEnabled: false,
-          scaleEnabled: true,
-          minScale: 1.0,
-          maxScale: 2.2,
-          child: Image.file(
-            File(imagePath),
-            fit: BoxFit.fill,
-          ),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          '${_currentIndex + 1} / ${widget.imagePaths.length}',
+          style: const TextStyle(color: Colors.white),
         ),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imagePaths.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        itemBuilder: (context, index) {
+          return Center(
+            child: InteractiveViewer(
+              boundaryMargin: const EdgeInsets.all(20),
+              minScale: 1.0,
+              maxScale: 4.0,
+              child: Image.file(
+                File(widget.imagePaths[index]),
+                fit: BoxFit.contain,
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
