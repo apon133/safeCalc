@@ -162,8 +162,9 @@ class MediaPageState extends ConsumerState<MediaPage> {
                       setState(() {
                         if (isSelected) {
                           _selectedIndices.remove(index);
-                          if (_selectedIndices.isEmpty)
+                          if (_selectedIndices.isEmpty) {
                             _isSelectionMode = false;
+                          }
                         } else {
                           _selectedIndices.add(index);
                         }

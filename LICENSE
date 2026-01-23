@@ -1,15 +1,31 @@
-Copyright (c) 2026 [Calculator]
+Custom Proprietary License – Non-Commercial, No-Resale
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software (the "Software"), to view and use it **for personal purposes only**.
+Copyright (c) 2026 Calculator
+All Rights Reserved.
 
-All other rights are **strictly prohibited**:
-- Copying, modifying, merging, publishing, distributing, sublicensing, or selling
-  the Software or any part of it is not allowed.
+Permission is granted to any individual to download, view, and use this
+software (the "Software") strictly for PERSONAL and NON-COMMERCIAL purposes
+only.
+
+The following actions are STRICTLY PROHIBITED without prior written permission
+from the copyright holder:
+
+1. Selling, licensing, sublicensing, renting, leasing, or monetizing the
+   Software or any part of it.
+2. Copying, modifying, merging, reverse-engineering, decompiling, or creating
+   derivative works based on the Software.
+3. Publishing, distributing, or sharing the Software (free or paid), whether
+   in source code or compiled/binary form.
+4. Using the Software in any commercial product, service, website, or
+   application.
+5. Claiming ownership or authorship of the Software or any modified version.
+
+Any violation of these terms will be considered a direct infringement of
+copyright law and may result in legal action.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
-LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
-OR OTHER DEALINGS IN THE SOFTWARE.
+AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
