@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "desktop",
-        "width": 800,
-        "height": 600
+        "title": "SafeCalc",
+        "width": 400,
+        "height": 800,
+        "fullscreen": false
       }
     ],
     "security": {

@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
 
+  let { children } = $props();
   let currentPath = $state("");
 
   $effect(() => {
@@ -15,7 +16,7 @@
 
 <div class="app-container">
   <div class="content-area">
-    <slot />
+    {@render children()}
   </div>
 
   <div class="bottom-nav">
