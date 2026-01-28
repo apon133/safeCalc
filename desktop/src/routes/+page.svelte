@@ -94,6 +94,43 @@
     showPasswordDialog = false;
   }
 
+  function handleKeydown(event) {
+    if (showPasswordDialog) return;
+    
+    const key = event.key;
+    
+    if (/[0-9]/.test(key)) {
+      addNumber(key);
+    } else if (key === '.') {
+      addNumber('.');
+    } else if (key === '+') {
+      addNumber('+');
+    } else if (key === '-') {
+      addNumber('-');
+    } else if (key === '*') {
+      addNumber('×');
+    } else if (key === '/') {
+      addNumber('÷');
+    } else if (key === '%') {
+      addNumber('%');
+    } else if (key === '(' || key === ')') {
+      addNumber(key);
+    } else if (key === 'Backspace') {
+      addNumber('Del');
+    } else if (key === 'Enter' || key === '=') {
+      event.preventDefault();
+      handleEqual();
+    } else if (key === 'Escape' || key === 'Delete') {
+      addNumber('C');
+    }
+  }
+
+  function handleDialogKeydown(event) {
+    if (event.key === 'Enter') {
+      submitDialog();
+    }
+  }
+
   async function submitDialog() {
      if (dialogMode === 'set') {
        if (dialogInput.length > 0) {
@@ -116,6 +153,8 @@
      }
   }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <main>
   <!-- Display Section -->
@@ -177,7 +216,13 @@
           {:else if dialogMode === 'check_old'}Enter Old Password
           {:else}Enter New Password{/if}
         </h3>
-        <input type="password" inputmode="numeric" bind:value={dialogInput} placeholder="Password" />
+        <input 
+          type="password" 
+          inputmode="numeric" 
+          bind:value={dialogInput} 
+          placeholder="Password" 
+          onkeydown={handleDialogKeydown}
+        />
         <div class="dialog-actions">
           <button onclick={closeDialog}>Cancel</button>
           <button onclick={submitDialog}>Submit</button>
