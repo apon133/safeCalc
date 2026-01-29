@@ -262,14 +262,14 @@
   }
 
   .input-display {
-    font-size: 45px;
+    font-size: clamp(32px, 8vw, 64px);
     font-weight: bold;
     word-break: break-all;
     text-align: right;
   }
 
   .result-display {
-    font-size: 32px;
+    font-size: clamp(24px, 5vw, 40px);
     color: rgba(255, 255, 255, 0.7);
     font-weight: 300;
     margin-top: 10px;
@@ -287,21 +287,26 @@
     flex-direction: column;
     justify-content: space-evenly;
     padding-bottom: 20px;
+    width: 100%;
+    max-width: 500px; /* Prevent it from getting too wide on large screens */
+    margin: 0 auto;
   }
 
   .row {
     display: flex;
     justify-content: space-evenly;
     align-items: center;
+    width: 100%;
   }
 
   .btn {
-    width: 70px;
-    height: 70px;
+    width: 20%; /* Responsive width */
+    max-width: 90px;
+    aspect-ratio: 1; /* Keep it circular */
     border-radius: 50%;
-    background-color: #1E1E1E; /* Dark Gray for numbers */
+    background-color: #1E1E1E;
     color: #fff;
-    font-size: 24px;
+    font-size: clamp(18px, 5vw, 28px);
     border: none;
     cursor: pointer;
     display: flex;
