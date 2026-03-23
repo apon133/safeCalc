@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:better_player_enhanced/better_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:calculetor/core/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -432,36 +433,29 @@ class VideoPlayerItem extends StatefulWidget {
 }
 
 class _VideoPlayerItemState extends State<VideoPlayerItem> {
-  late BetterPlayerController _betterPlayerController;
+  // Create a [Player] to control playback.
+  late final player = Player();
+  // Create a [VideoController] to handle video output from [Player].
+  late final controller = VideoController(player);
 
   @override
   void initState() {
     super.initState();
-    BetterPlayerConfiguration betterPlayerConfiguration =
-        const BetterPlayerConfiguration(
-      aspectRatio: 16 / 9,
-      fit: BoxFit.contain,
-      autoPlay: true,
-      looping: true,
-    );
-    BetterPlayerDataSource dataSource = BetterPlayerDataSource(
-      BetterPlayerDataSourceType.file,
-      widget.mediaPath,
-    );
-    _betterPlayerController = BetterPlayerController(betterPlayerConfiguration);
-    _betterPlayerController.setupDataSource(dataSource);
+    // Play a [Media] or [Playlist].
+    player.open(Media(widget.mediaPath));
+    player.setPlaylistMode(PlaylistMode.loop);
   }
 
   @override
   void dispose() {
-    _betterPlayerController.dispose();
+    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: BetterPlayer(controller: _betterPlayerController),
+      child: Video(controller: controller),
     );
   }
 }
